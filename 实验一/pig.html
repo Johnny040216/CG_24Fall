@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animated Pig</title>
+<style>
+canvas {
+border: 1px solid black;
+background-color: white;
+display: block;
+margin: auto;
+}
+</style>
+</head>
+<body>
+<canvas id="animalCanvas" width="800" height="600"></canvas>
+<script>
+const canvas = document.getElementById('animalCanvas');
+const ctx = canvas.getContext('2d');
+
+// Pig's position and properties
+let pig = {
+    x: 300,
+    y: 250,
+    width: 100,
+    height: 100,
+    color: 'pink',
+    eyeColor: 'black',
+    isDragging: false,
+    legOffset: 0,
+    eyeOffest: 0,
+    bodyOffset: 0,
+    legDirection: 1,
+    isMovingRight: false,
+    isMovingLeft: false,
+    isJumping: false,
+    velocity: 0,
+    verticalVelocity: 0,
+    acceleration: 0.02,
+    verticalAcceleration: 0.5,
+    moveDuration: 0,
+    maxMoveDuration: 200, // 0.5 seconds at 60 FPS
+    groundY: 250, // Initial ground position
+    isCrouching: false,
+};
+
+// Draw the pig
+function drawPig() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Body
+    ctx.fillStyle = pig.color;
+    ctx.beginPath();
+    ctx.ellipse(pig.x + pig.width / 2, pig.y + pig.height / 2+pig.bodyOffset, pig.width / 2, pig.height / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    
+    // Legs (drawn as ellipses)
+    ctx.fillStyle = pig.color;
+    if (pig.isCrouching) {
+        // Draw legs as circles when crouching
+        ctx.beginPath();
+        ctx.arc(pig.x + pig.width / 2 - 25, pig.y + pig.height+ pig.legOffset, 10, 0, Math.PI * 2); // Left leg
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(pig.x + pig.width / 2 + 25, pig.y + pig.height- pig.legOffset, 10, 0, Math.PI * 2); // Right leg
+        ctx.fill();
+    } else {
+        // Draw legs as ellipses when not crouching
+        ctx.beginPath();
+        ctx.ellipse(pig.x + pig.width / 2 - 25, pig.y + pig.height + pig.legOffset, 10, 15, 0, 0, Math.PI * 2); // Left leg
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(pig.x + pig.width / 2 + 25, pig.y + pig.height - pig.legOffset, 10, 15, 0, 0, Math.PI * 2); // Right leg
+        ctx.fill();
+    }
+
+    // Arms
+    ctx.fillRect(pig.x - 20, pig.y + 35, 20, 10); // Left arm
+    ctx.fillRect(pig.x + pig.width, pig.y + 35, 20, 10); // Right arm
+
+    // Snout
+    ctx.fillStyle = 'lightpink';
+    ctx.beginPath();
+    ctx.ellipse(pig.x + pig.width / 2, pig.y + pig.height / 2, 30, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+ // Nostrils
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.arc(pig.x + pig.width / 2 - 10, pig.y + pig.height / 2, 5, 0, Math.PI * 2); // Left nostril
+    ctx.arc(pig.x + pig.width / 2 + 10, pig.y + pig.height / 2, 5, 0, Math.PI * 2); // Right nostril
+    ctx.fill();
+   
+
+    // Eyes
+    ctx.fillStyle = pig.eyeColor;
+    ctx.beginPath();
+    ctx.arc(pig.x + 30+pig.eyeOffest, pig.y + 30, 5, 0, Math.PI * 2); // Left eye
+    ctx.arc(pig.x + 70+pig.eyeOffest, pig.y + 30, 5, 0, Math.PI * 2); // Right eye
+    ctx.fill();
+}
+
+// Animation loop
+function animate() {
+    // Update leg offset for animation
+    if (pig.isMovingRight || pig.isMovingLeft || pig.isJumping) {
+        pig.legOffset += pig.legDirection;
+        if (pig.legOffset > 5 || pig.legOffset < -5) {
+            pig.legDirection *= -1;
+        }
+    }
+ 
+    // Update position if moving right
+    if (pig.isMovingRight) {
+        pig.velocity += pig.acceleration;
+        pig.x += pig.velocity;
+        pig.moveDuration += 1;
+        pig.eyeOffest=6;   
+        // Stop moving after maxMoveDuration
+        if (pig.moveDuration > pig.maxMoveDuration) {
+            pig.isMovingRight = false;
+            pig.velocity = 0;
+            pig.moveDuration = 0;
+            pig.legOffset=0;
+            pig.eyeOffest=0;    
+        }
+    }
+
+    // Update position if moving left
+    if (pig.isMovingLeft) {
+        pig.velocity += pig.acceleration;
+        pig.x -= pig.velocity;
+        pig.moveDuration += 1;
+        pig.eyeOffest=-6;
+        // Stop moving after maxMoveDuration
+        if (pig.moveDuration > pig.maxMoveDuration) {
+            pig.isMovingLeft = false;
+            pig.velocity = 0;
+            pig.moveDuration = 0;
+            pig.legOffset=0;
+            pig.eyeOffest=0;
+        }
+    }
+
+    // Update position if jumping
+    if (pig.isJumping) {
+        pig.verticalVelocity -= pig.verticalAcceleration;
+        pig.y -= pig.verticalVelocity;
+
+        // Stop jumping and reset position when hitting the ground
+        if (pig.y >= pig.groundY) {
+            pig.isJumping = false;
+            pig.y = pig.groundY;
+            pig.verticalVelocity = 0;
+        }
+    }
+// Update position if crouching
+if (pig.isCrouching) {
+       
+        pig.bodyOffset = 5;
+    } else {
+        
+        pig.bodyOffset = 0;
+    }
+    drawPig();
+    requestAnimationFrame(animate);
+}
+
+
+function moveRight() {
+    pig.isMovingRight = true;
+    pig.isMovingLeft = false;
+    pig.velocity = 0; // Reset velocity
+    pig.acceleration = 0.02; // Reset acceleration
+    pig.moveDuration = 0; // Reset move duration
+}
+
+function jump() {
+    if (!pig.isJumping) {
+        pig.isJumping = true;
+        pig.verticalVelocity = 10; // Initial jump velocity
+    }
+}
+
+function moveLeft() {
+    pig.isMovingLeft = true;
+    pig.isMovingRight = false;
+    pig.velocity = 0; // Reset velocity
+    pig.acceleration = 0.02; // Reset acceleration
+    pig.moveDuration = 0; // Reset move duration
+}
+
+// Mouse events
+canvas.addEventListener('mousedown', (e) => {
+    const mouseX = e.offsetX;
+    const mouseY = e.offsetY;
+
+    if (mouseX >= pig.x && mouseX <= pig.x + pig.width &&
+        mouseY >= pig.y && mouseY <= pig.y + pig.height) {
+        pig.isDragging = true;
+    }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (pig.isDragging) {
+        pig.x = e.offsetX - pig.width / 2;
+        pig.y = e.offsetY - pig.height / 2;
+        drawPig();
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    pig.isDragging = false;
+});
+
+window.addEventListener('keydown', (e) => {
+    switch (e.key) {
+        case 'd':
+        case 'D':
+            moveRight();
+            break;
+        case 'a':
+        case 'A':
+            moveLeft();
+            break;
+        case ' ':
+        case 'w':
+            jump();
+            break;
+        case 's':
+        case 'S':
+            pig.isCrouching = true;
+            pig.acceleration=0;
+            break;
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    switch (e.key) {
+        case 's':
+        case 'S':
+            pig.isCrouching = false;
+            pig.acceleration=0.02;
+            break;
+    }
+});
+
+// Menu functionality
+const menu = document.createElement('div');
+menu.innerHTML = `
+    <h3>Menu</h3>
+    <button onclick="changeColor('pink')">Pink</button>
+    <button onclick="changeColor('blue')">Blue</button>
+    <button onclick="changeColor('green')">Green</button>
+    <button onclick="moveLeft()">Move Left (A)</button>
+    <button onclick="moveRight()">Move Right (D)</button>
+    <button onclick="jump()">Jump (Space)</button>
+    
+`;
+document.body.insertBefore(menu, canvas);
+
+function changeColor(color) {
+    pig.color = color;
+    drawPig();
+}
+
+// Initial drawing and animation start
+drawPig();
+animate(); // Start the animation loop once
+
+</script>
+</body>
+</html>

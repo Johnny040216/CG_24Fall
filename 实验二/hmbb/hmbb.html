@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>hmbb</title>
+</head>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute  vec4 vPosition;
+attribute  vec4 vColor;
+varying vec4 fColor;
+
+uniform mat4 viewMatrix;
+uniform mat4 modelViewMatrix;
+
+uniform mat4 r;
+
+void main()
+{
+    fColor = vColor;
+    gl_Position = viewMatrix * modelViewMatrix * vPosition*r;
+    gl_Position.z = -gl_Position.z;
+
+
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec4 fColor;
+
+void
+main()
+{
+    gl_FragColor = fColor;
+}
+</script>
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="hmbb.js"></script>
+
+<body>
+<canvas id="gl-canvas" width="650" height="650">
+    Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<br/>
+<button id = "adjustView">调整视图</button>
+<button id="resetButton">重置</button>
+<p>海绵宝宝：
+    <button id = "cubeForward">前进</button>
+    <button id = "cubeBack">后退</button>
+    <button id = "cubeR1">逆时针旋转</button>
+    <button id = "cubeR2">顺时针旋转</button>
+    <button id = "small">缩小</button>
+    <button id = "big">放大</button>
+</p>
+
+
+
+
+</body>
+</html>

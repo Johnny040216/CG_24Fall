@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<br/>
+
+<button id="Stop">Stop</button>
+
+<!-- vertex shader -->
+<script id="vertex-shader" type="x-shader/x-vertex">
+    attribute vec4 vPosition; // 顶点位置属性
+    attribute vec3 vNormal;   // 顶点法线属性
+    
+    uniform mat4 u_projection; // 投影矩阵
+    uniform mat4 u_view;       // 视图矩阵
+    uniform mat4 u_world;      // 世界矩阵
+    
+    varying vec3 v_worldPosition; // 传递给片段着色器的世界坐标
+    varying vec3 v_worldNormal;   // 传递给片段着色器的世界法线
+    
+    void main() {
+        // 将顶点位置从模型空间转换到裁剪空间
+        gl_Position = u_projection * u_view * u_world * vPosition;
+    
+        // 将顶点的世界坐标传递给片段着色器
+        v_worldPosition = (u_world * vPosition).xyz;
+    
+        // 将顶点的世界法线传递给片段着色器
+        v_worldNormal = mat3(u_world) * vNormal;
+    }
+    </script>
+<!-- fragment shader -->
+<script id="fragment-shader" type="x-shader/x-fragment">
+    precision mediump float; // 定义浮点数的中等精度
+    
+    varying vec3 v_worldPosition; // 从顶点着色器传递来的世界坐标
+    varying vec3 v_worldNormal;   // 从顶点着色器传递来的世界法线
+    
+    uniform samplerCube u_texture;          // 立方体贴图采样器
+    uniform vec3 u_worldCameraPosition;     // 相机在世界坐标系中的位置
+    
+    void main() {
+        // 归一化世界法线
+        vec3 worldNormal = normalize(v_worldNormal);
+        // 计算从相机到表面的方向向量，并归一化
+        vec3 eyeToSurfaceDir = normalize(v_worldPosition - u_worldCameraPosition);
+        // 计算反射向量
+        vec3 direction = reflect(eyeToSurfaceDir, worldNormal);
+    
+        // 使用反射向量从立方体贴图中采样颜色，并将结果赋值给片段颜色
+        gl_FragColor = textureCube(u_texture, direction);
+    }
+    </script>
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="cubet.js"></script>
+
+</body>
+</html>
